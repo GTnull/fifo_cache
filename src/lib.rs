@@ -21,8 +21,8 @@ impl<K: Eq + Hash, V> FifoCache<K, V> {
         assert_eq!(size > 0, true);
         FifoCache {
             size: size,
-            fifo: VecDeque::with_capacity(size * 2),
-            map: HashMap::with_capacity(size * 2),
+            fifo: VecDeque::with_capacity(size),
+            map: HashMap::with_capacity(size),
         }
     }
 
@@ -50,13 +50,8 @@ impl<K: Eq + Hash, V> FifoCache<K, V> {
             return Some(entry.insert(v));
         }
 
-        // need to insert the entry
-        let k1 = k.clone();
-        self.fifo.push_back(k1);
-        let ret = self.map.insert(k, v);
-
-        // remove old entry from the cache
-        while self.fifo.len() > self.size {
+        // If the capacity is exceeded, remove old entry from the cache
+        while self.fifo.len() > self.size - 1 {
             let entry = self
                 .fifo
                 .pop_front()
@@ -66,7 +61,10 @@ impl<K: Eq + Hash, V> FifoCache<K, V> {
                 .expect("failed to remove from FifoCache");
         }
 
-        ret
+        // need to insert the entry
+        let k1 = k.clone();
+        self.fifo.push_back(k1);
+        self.map.insert(k, v)
     }
 }
 
